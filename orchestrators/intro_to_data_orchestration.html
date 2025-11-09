@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Data Orchestration 101: Airflow vs. Dagster</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/white.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+  <style type="text/css">
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 { text-transform: none; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section>
+  <h1>Introduction to Data Orchestration</h1>
+  <p style="font-size:0.8em;">Presenter: Eddie Cosma</p>
+  <p style="font-size:0.8em;">CLEpy Meetup &ndash; August 12, 2025</p>
+</section>
+
+<section>
+  <h2>Agenda</h2>
+  <ul>
+    <li>What are Data Pipelines?</li>
+    <li>What is Data Orchestration?</li>
+    <li>Why Orchestrators Matter</li>
+    <li>Apache Airflow vs. Dagster</li>
+    <li>Demos</li>
+    <li>Q&amp;A</li>
+  </ul>
+</section>
+
+<section>
+  <h2>The Big Picture: Data Pipelines</h2>
+  <ul>
+    <li>Series (graph) of data processing tasks</li>
+    <li>E.g., Ingest → [Transform ⇆ Store] → Analyze</li>
+    <li>Orchestration coordinates each step and manages dependencies</li>
+  </ul>
+</section>
+
+<section>
+  <h2>ETL vs. ELT</h2>
+  <img src="assets/etl-pipeline-127870698.png" alt="ETL Diagram" style="max-height: 200px;">
+  <img src="assets/elt-pipeline-1024x336-81340412.png" alt="ELT Diagram" style="max-height: 200px;">
+  <p style="font-size:0.6em;">Source: <a href="https://www.simform.com/blog/data-pipeline/" target="_blank">https://www.simform.com/blog/data-pipeline/</a></p>
+  <aside class="notes">
+    <ul>
+      <li>ETL was the traditional approach—transform early because compute resources were limited in warehouses.</li>
+      <li>ELT emerged with cloud data warehouses that make it easy to store raw data and transform later.</li>
+      <li>Orchestrators like Airflow and Dagster can handle either approach.</li>
+    </ul>
+  </aside>
+</section>
+
+<section>
+  <h2>What is Data Orchestration?</h2>
+  <ul>
+    <li>Coordinates execution of data tasks</li>
+    <li>Schedules tasks (time-based, sensor-based)</li>
+    <li>Manages dependencies</li>
+    <li>Handles retries</li>
+    <li>Monitors completion</li>
+    <li>Tracks assets (metadata, staleness, etc.)</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Task-based vs. Asset-based</h2>
+  <ul>
+    <li><strong>Task-based</strong>: focused on imperative steps of data processing</li>
+    <li>Imagine baking cookies using functions get_ingredients, mix_ingredients, bake_cookies</li>
+    <hr>
+    <li><strong>Asset-based</strong>: focused on data assets created "between" processing steps</li>
+    <li>Imagine baking cookies by <i>materializing</i> assets measured_ingredients, cookie_dough, cookies</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Task-based vs. Asset-based</h2>
+  <ul>
+    <li><strong>Task-based</strong>: prominent in Airflow 2</li>
+    <li><strong>Asset-based</strong>: prominent in Dagster and Airflow 3</li>
+  </ul>
+</section>
+
+<section>
+  <h2>What is a DAG?</h2>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Tred-Gprime.svg/397px-Tred-Gprime.svg.png" alt="Example DAG" style="float: right; margin-left: 20px; max-width: 20%;">
+  <ul style="display: inline">
+    <li><strong>DAG</strong> = Directed Acyclic Graph</li>
+    <li>Represents tasks (nodes) and dependencies (edges) in a workflow</li>
+    <li><strong>Directed</strong>: edges have a direction, indicating execution order</li>
+    <li><strong>Acyclic</strong>: no cycles allowed — you can’t loop back to a previous task</li>
+    <li>Ensures workflows have a clear start and end</li>
+  </ul>
+  <p style="font-size:0.6em;">Further reading: <a href="https://en.wikipedia.org/wiki/Directed_acyclic_graph" target="_blank">https://en.wikipedia.org/wiki/Directed_acyclic_graph</a></p>
+
+  <aside class="notes">
+    DAGs are the backbone of most modern orchestrators like Airflow and Dagster.
+    The "Directed" part means each step clearly leads to the next.
+    "Acyclic" prevents infinite loops — you can branch and merge paths,
+    but execution always moves forward.
+    This concept allows us to visualize and reason about complex workflows.
+  </aside>
+</section>
+
+<section>
+  <h2>Why Use an Orchestrator?</h2>
+  <ul>
+    <li>Reliability</li>
+    <li>Reproducibility</li>
+    <li>Scalability</li>
+    <li>Observability</li>
+    <li>Collaboration</li>
+  </ul>
+</section>
+
+<section>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/AirflowLogo.svg/640px-AirflowLogo.svg.png" alt="Airflow Logo" style="max-width: 40%;">
+  <ul>
+    <li>Origin: Airbnb (2015), now Apache project (2019)</li>
+    <li>DAG-based workflows (historically, task-based)</li>
+    <li>Large community</li>
+    <li>Well-documented</li>
+    <li>Extensive use in industry</li>
+  </ul>
+</section>
+
+<section>
+  <h2>New in Airflow 3</h2>
+  <ul>
+    <li>Asset-based workflows</li>
+    <li>Improved UI</li>
+    <li>DAG versioning</li>
+    <li>Task execution independent of core Airflow</li>
+  </ul>
+</section>
+
+<section>
+  <img src="https://cdn.prod.website-files.com/681399f654933b29e12fb8bd/681399f654933b29e12fb8e1_Dagster%20Logo.avif" alt="Dagster Logo" style="max-width: 40%;">
+  <ul>
+    <li>Launched 2019</li>
+    <li>Asset-centric approach</li>
+    <li>Type checking &amp; strong local dev experience</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Demo: Airflow 2</h2>
+</section>
+
+<section>
+  <h2>Demo: Dagster</h2>
+</section>
+
+<section>
+  <h2>Final Takeaways</h2>
+  <ul>
+    <li>Orchestration = reliability for data pipelines</li>
+    <li>Both Airflow and Dagster are solid choices</li>
+    <li>Airflow more prevalent in industry; recently modernized</li>
+    <li>Dagster modern and dev-friendly</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Q&amp;A</h2>
+  <p>Questions?</p>
+</section>
+
+<section>
+  <h3>What do you want to see at CLEpy?</h3>
+  <img src="assets/mentimeter_qr_code.png" alt="Feedback form" style="max-width: 50%;">
+  <p><a href="https://www.menti.com/alpnt1dxqdtk" target="_blank">https://www.menti.com/alpnt1dxqdtk</a></p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  Reveal.initialize({ hash: true, margin: 0.1 });
+  hljs.highlightAll();
+</script>
+
+</body>
+</html>
