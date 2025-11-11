@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Python 3.14 Change Summary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/white.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+  <style type="text/css">
+    .reveal h1,
+    .reveal h2,
+    .reveal h3,
+    .reveal h4,
+    .reveal h5,
+    .reveal h6 {
+      text-transform: none;
+      text-align: left;
+    }
+
+    p {
+      text-align: left;
+    }
+
+    img {
+      position: absolute;
+      left: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <section>
+        <h1>Python 3.14</h1>
+        <h3>"π-thon"</h3>
+        <p style="font-size:0.8em;">Presenter: Eddie Cosma</p>
+        <p style="font-size:0.8em;">CLEpy Meetup &ndash; November 11, 2025</p>
+      </section>
+
+      <section>
+        <h2>Template strings (PEP 750)</h2>
+        <p>Like f-strings, but return an object instead of a string.</p>
+        <pre><code class="language-python" data-trim data-line-numbers="1-2|3-4">
+>>> variety = 'Stilton'
+>>> template = t'Try some {variety} cheese!'
+>>> type(template)
+&lt;class 'string.templatelib.Template'&gt;
+  </code></pre>
+      </section>
+
+      <section>
+        <h2>Template strings (cont.)</h2>
+        <p>Parts of the template object:</p>
+        <ol>
+          <li>are accessible <i>before they are rendered as a string</i></li>
+          <li>are immutable</li>
+        </ol>
+        <pre><code class="language-python" data-trim>
+>>> list(template)
+['Try some ', Interpolation('Stilton', 'variety', None, ''), ' cheese!']
+  </code></pre>
+      </section>
+
+      <section>
+        <h2>Template strings (cont.)</h2>
+        <p>Functions can render template strings</p>
+        <pre><code class="language-python" data-trim data-line-numbers="1|3-11|13-15">
+from string.templatelib import Interpolation
+
+def lower_upper(template):
+    """Render static parts lowercase and interpolations uppercase."""
+    parts = []
+    for part in template:
+        if isinstance(part, Interpolation):
+            parts.append(str(part.value).upper())
+        else:
+            parts.append(part.lower())
+    return ''.join(parts)
+
+name = 'Wenslydale'
+template = t'Mister {name}'
+assert lower_upper(template) == 'mister WENSLYDALE'
+  </code></pre>
+      </section>
+
+      <section>
+        <h2>Deferred evaluation of annotations (PEP 649)</h2>
+        <p>Forward references don't need to be in quotations.</p>
+        <pre><code class="language-python" data-trim>
+>>> def example(input: UndefinedType):  # This is valid now!
+...     pass
+  </code></pre>
+      </section>
+
+      <section>
+        <h2>New annotationlib module for inspecting annotations (PEP 649)</h2>
+        <pre><code class="language-python" data-trim>
+>>> from annotationlib import get_annotations, Format
+>>> get_annotations(example, format=Format.STRING)
+{'input': 'UndefinedType'}
+  </code></pre>
+        <p>Three options for format parameter:</p>
+        <ul>
+          <li>Format.VALUE - evaluates annotations normally</li>
+          <li>Format.FORWARDREF - preserves undefined names as forward references</li>
+          <li>Format.STRING - gives the raw annotation string</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Skip parentheses in except blocks (PEP 758)</h3>
+        <pre><code class="language-python" data-trim>
+try:
+    some_code()
+except OneException, AnotherException:  # No parentheses!
+    print("So clean!")
+  </code></pre>
+        <p>Caveat: only if you don't use the <i>as</i> keyword</p>
+      </section>
+
+      <section>
+        <h3>Discourage return/break/continue in finally block (PEP 765)</h3>
+        From <a
+          href="https://docs.python.org/3/tutorial/errors.html#tut-cleanup">https://docs.python.org/3/tutorial/errors.html</a>:
+        <ul>
+          <li>If the <code>finally</code> clause executes a <code>break</code>, <code>continue</code>
+            or <code>return</code> statement, exceptions are not re-raised.</li>
+          <li>If a <code>finally</code> clause includes a <code>return</code> statement, the
+            returned value will be the one from the <code>finally</code> clause's
+            <code>return</code> statement, not the value from the <code>try</code> clause's
+            <code>return</code> statement.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Discourage return/break/continue in finally block (PEP 765)</h3>
+        <pre><code class="language-python" data-trim>
+>>> def f():
+...      try:
+...           ...
+...      finally:
+...           return 42
+...
+&lt;python-input-7&gt;:5: SyntaxWarning: 'return' in a 'finally' block
+  </code></pre>
+      </section>
+
+      <section>
+        <h3>map() has strict mode</h3>
+        <pre><code class="language-python" data-trim data-line-numbers="1-4|6-7|9-14">
+>>> a = [1,2,3,4]
+>>> b = [2,2,2]
+>>> def mult(a,b):
+...      return a * b
+
+>>> list(map(mult, a, b))
+[2, 4, 6]
+
+>>> list(map(mult, a, b, strict=True))
+Traceback (most recent call last):
+  File "&lt;python-input-14&gt;", line 1, in &lt;module&gt;
+    list(map(mult, a, b, strict=True))
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: map() argument 2 is shorter than argument 1
+  </code></pre>
+        <p></p>
+      </section>
+
+      <section>
+        <h3>Clearer unpacking errors</h3>
+        <pre><code class="language-python" data-trim data-trim data-line-numbers="1-7|8-15">
+# Python 3.13 and earlier
+>>> x, y = 1, 2, 3
+Traceback (most recent call last):
+  File "&lt;python-input-0&gt;", line 1, in &lt;module&gt;
+    x, y = 1, 2, 3
+    ^^^^
+ValueError: too many values to unpack (expected 2)
+
+# Python 3.14
+>>> x, y = 1, 2, 3
+Traceback (most recent call last):
+  File "&lt;python-input-0&gt;", line 1, in &lt;module&gt;
+    x, y = 1, 2, 3
+    ^^^^
+ValueError: too many values to unpack (expected 2, got 3)
+  </code></pre>
+      </section>
+
+      <section>
+        <h3>Float conversion methods</h3>
+        <pre><code class="language-python" data-trim>
+>>> float.from_number(3.14)
+3.14
+>>> float.from_number('3.14')
+Traceback (most recent call last):
+  File "&lt;python-input-15&gt;", line 1, in &lt;module&gt;
+    float.from_number('3.14')
+    ~~~~~~~~~~~~~~~~~^^^^^^^^
+TypeError: must be real number, not str
+  </code></pre>
+        <p></p>
+      </section>
+
+      <section>
+        <h3>And more...</h3>
+        <ul>
+          <li>Multiple interpreters in standard library (PEP 734)</li>
+          <li>Safe debugging interface for CPython (PEP 768)</li>
+          <li>PyInitConfig C API (PEP 741)</li>
+          <li>super() can now be pickled</li>
+          <li>Regex \B matches empty string</li>
+          <li>Zstandard support in standard library (PEP 784)</li>
+          <li>Many improvements to make error error messages clearer</li>
+          <li>Official support for free-threading (PEP 779)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Further reading</h3>
+        <p><a href="https://docs.python.org/3/whatsnew/3.14.html">https://docs.python.org/3/whatsnew/3.14.html</a></p>
+        <h3>This presentation</h3>
+        <img src="presentation_link.gif" style="height: 200px; width: 200px;">
+      </section>
+
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      margin: 0.1,
+      plugins: [RevealHighlight]
+    });
+    hljs.highlightAll();
+  </script>
+</body>
+
+</html>
